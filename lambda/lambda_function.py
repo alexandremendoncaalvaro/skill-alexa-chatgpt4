@@ -1,22 +1,26 @@
+import os
 import logging
 import ask_sdk_core.utils as ask_utils
-import openai
+
 from ask_sdk_core.skill_builder import SkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 from ask_sdk_core.handler_input import HandlerInput
+
 from ask_sdk_model import Response
 
-# Set your OpenAI API key
-openai.api_key = "substitua-pela-sua-chave-da-openai"
+from openai import OpenAI
+
+openai.api_key = "substitua-por-sua-api-key-da-openai"
+MODEL = "gpt-4"
+
+client = OpenAI(api_key=openai_api_key)
+messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
-
 class LaunchRequestHandler(AbstractRequestHandler):
-    """Handler for Skill Launch."""
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
 
@@ -33,8 +37,8 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .response
         )
 
+
 class GptQueryIntentHandler(AbstractRequestHandler):
-    """Handler for Gpt Query Intent."""
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
         return ask_utils.is_intent_name("GptQueryIntent")(handler_input)
@@ -51,17 +55,28 @@ class GptQueryIntentHandler(AbstractRequestHandler):
                     .response
             )
 
-class CatchAllExceptionHandler(AbstractExceptionHandler):
-    """Generic error handling to capture any syntax or routing errors."""
-    def can_handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> bool
-        return True
 
-    def handle(self, handler_input, exception):
-        # type: (HandlerInput, Exception) -> Response
-        logger.error(exception, exc_info=True)
+def generate_gpt_response(query):
+    try:
+        messages.append(
+            {"role": "user", "content": query},
+        )
+        response = client.chat.completions.create(model=MODEL,messages=messages)
+        reply = response.choices[0].message.content
+        messages.append({"role": "assistant", "content": reply})
+        return reply
+    except Exception as e:
+        return f"Erro ao gerar resposta: {str(e)}"
 
-        speak_output = "Desculpe, não consegui obter uma resposta para esta pergunta. Tente perguntar de outra forma."
+
+class HelpIntentHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("AMAZON.HelpIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        speak_output = "Como posso te ajudar?"
 
         return (
             handler_input.response_builder
@@ -70,8 +85,8 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
                 .response
         )
 
+
 class CancelOrStopIntentHandler(AbstractRequestHandler):
-    """Single handler for Cancel and Stop Intent."""
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
         return (ask_utils.is_intent_name("AMAZON.CancelIntent")(handler_input) or
@@ -79,7 +94,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Saindo do modo Chat Gepetê."
+        speak_output = "Até logo!"
 
         return (
             handler_input.response_builder
@@ -87,30 +102,47 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-def generate_gpt_response(query):
-    try:
-        messages.append(
-            {"role": "user", "content": query},
+
+class SessionEndedRequestHandler(AbstractRequestHandler):
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_request_type("SessionEndedRequest")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+
+        # Any cleanup logic goes here.
+
+        return handler_input.response_builder.response
+
+
+class CatchAllExceptionHandler(AbstractExceptionHandler):
+    def can_handle(self, handler_input, exception):
+        # type: (HandlerInput, Exception) -> bool
+        return True
+
+    def handle(self, handler_input, exception):
+        # type: (HandlerInput, Exception) -> Response
+        logger.error(exception, exc_info=True)
+
+        speak_output = "Desculpe, não consegui processar sua solicitação."
+
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                .ask(speak_output)
+                .response
         )
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=1000,
-            n=1,
-            stop=None,
-            temperature=0.5
-        )
-        reply = response['choices'][0]['message']['content'].strip()
-        messages.append({"role": "assistant", "content": reply})
-        return reply
-    except Exception as e:
-        return f"Erro ao gerar resposta: {str(e)}"
+
 
 sb = SkillBuilder()
 
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(GptQueryIntentHandler())
+sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
+sb.add_request_handler(SessionEndedRequestHandler())
+
 sb.add_exception_handler(CatchAllExceptionHandler())
 
 lambda_handler = sb.lambda_handler()

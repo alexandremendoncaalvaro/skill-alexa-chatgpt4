@@ -1,3 +1,2 @@
-boto3==1.9.216
 ask-sdk-core==1.11.0
-openai
+openai==1.6.1
