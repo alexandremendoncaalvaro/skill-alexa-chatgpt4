@@ -11,14 +11,15 @@ from ask_sdk_model import Response
 
 from openai import OpenAI
 
-openai.api_key = "substitua-por-sua-api-key-da-openai"
-MODEL = "gpt-4"
-
-client = OpenAI(api_key=openai_api_key)
-messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+openai_api_key = "substitua-por-sua-api-key-da-openai"
+client = OpenAI(api_key=openai_api_key)
+
+MODEL = "gpt-4"
+
+messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
 
 class LaunchRequestHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):

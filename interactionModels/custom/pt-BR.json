@@ -29,10 +29,6 @@
           "samples": [
             "{query}"
           ]
-        },
-        {
-          "name": "AMAZON.FallbackIntent",
-          "samples": []
         }
       ],
       "types": [],
