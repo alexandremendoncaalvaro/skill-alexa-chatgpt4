@@ -17,7 +17,7 @@ logger.setLevel(logging.INFO)
 openai_api_key = "substitua-por-sua-api-key-da-openai"
 client = OpenAI(api_key=openai_api_key)
 
-MODEL = "gpt-4"
+MODEL = "gpt-4-1106-preview"
 
 messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
 
