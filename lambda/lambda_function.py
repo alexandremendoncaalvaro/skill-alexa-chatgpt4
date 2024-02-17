@@ -14,7 +14,8 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-openai_api_key = "substitua-por-sua-api-key-da-openai"
+openai_api_key = "SUBSTITUA-POR-SUA-API-KEY-DA-OPENAI"
+
 client = OpenAI(api_key=openai_api_key)
 
 MODEL = "gpt-4-1106-preview"
@@ -52,7 +53,7 @@ class GptQueryIntentHandler(AbstractRequestHandler):
         return (
                 handler_input.response_builder
                     .speak(response)
-                    .ask("Alguma outra pergunta?")
+                    .ask("Você pode fazer uma nova pergunta ou falar: sair.")
                     .response
             )
 
@@ -62,7 +63,7 @@ def generate_gpt_response(query):
         messages.append(
             {"role": "user", "content": query},
         )
-        response = client.chat.completions.create(model=MODEL,messages=messages)
+        response = client.chat.completions.create(model=MODEL, messages=messages, max_tokens=700, temperature=0.8)
         reply = response.choices[0].message.content
         messages.append({"role": "assistant", "content": reply})
         return reply
