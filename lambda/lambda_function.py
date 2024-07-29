@@ -18,9 +18,15 @@ openai_api_key = "SUBSTITUA-POR-SUA-API-KEY-DA-OPENAI"
 
 client = OpenAI(api_key=openai_api_key)
 
-MODEL = "gpt-4-1106-preview"
+MODEL = "gpt-4o-mini"
 
-messages = [{"role": "system", "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil."}]
+messages = [
+    {
+        "role": "system",
+        "content": "Você é uma assistente muito útil. Por favor, responda de forma clara e concisa em Português do Brasil.",
+    }
+]
+
 
 class LaunchRequestHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
@@ -30,13 +36,14 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = "Bem vindo ao Chat 'Gepetê Quatro' da 'Open ei ai'! Qual a sua pergunta?"
+        speak_output = (
+            "Bem vindo ao Chat 'Gepetê Quatro' da 'Open ei ai'! Qual a sua pergunta?"
+        )
 
         return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
+            handler_input.response_builder.speak(speak_output)
+            .ask(speak_output)
+            .response
         )
 
 
@@ -51,11 +58,10 @@ class GptQueryIntentHandler(AbstractRequestHandler):
         response = generate_gpt_response(query)
 
         return (
-                handler_input.response_builder
-                    .speak(response)
-                    .ask("Você pode fazer uma nova pergunta ou falar: sair.")
-                    .response
-            )
+            handler_input.response_builder.speak(response)
+            .ask("Você pode fazer uma nova pergunta ou falar: sair.")
+            .response
+        )
 
 
 def generate_gpt_response(query):
@@ -63,7 +69,9 @@ def generate_gpt_response(query):
         messages.append(
             {"role": "user", "content": query},
         )
-        response = client.chat.completions.create(model=MODEL, messages=messages, max_tokens=700, temperature=0.8)
+        response = client.chat.completions.create(
+            model=MODEL, messages=messages, max_tokens=700, temperature=0.8
+        )
         reply = response.choices[0].message.content
         messages.append({"role": "assistant", "content": reply})
         return reply
@@ -81,28 +89,24 @@ class HelpIntentHandler(AbstractRequestHandler):
         speak_output = "Como posso te ajudar?"
 
         return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
+            handler_input.response_builder.speak(speak_output)
+            .ask(speak_output)
+            .response
         )
 
 
 class CancelOrStopIntentHandler(AbstractRequestHandler):
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
-        return (ask_utils.is_intent_name("AMAZON.CancelIntent")(handler_input) or
-                ask_utils.is_intent_name("AMAZON.StopIntent")(handler_input))
+        return ask_utils.is_intent_name("AMAZON.CancelIntent")(
+            handler_input
+        ) or ask_utils.is_intent_name("AMAZON.StopIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speak_output = "Até logo!"
 
-        return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .response
-        )
+        return handler_input.response_builder.speak(speak_output).response
 
 
 class SessionEndedRequestHandler(AbstractRequestHandler):
@@ -130,10 +134,9 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         speak_output = "Desculpe, não consegui processar sua solicitação."
 
         return (
-            handler_input.response_builder
-                .speak(speak_output)
-                .ask(speak_output)
-                .response
+            handler_input.response_builder.speak(speak_output)
+            .ask(speak_output)
+            .response
         )
 
 
